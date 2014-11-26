@@ -6,15 +6,14 @@ import time
 import sys
 import signal
 import os
+import kirk
 if __name__ == "__main__":
     root = Tk()
     
-    width = 714
-    height = 964
-    box_size = 35
-    #adding the image
-    File = "./interface/kirk.png"
-    img = ImageTk.PhotoImage(Image.open(File))
+    width = kirk.width
+    height = kirk.height
+    box_size = kirk.box_size
+    img = ImageTk.PhotoImage(Image.open(kirk.File))
     w = Canvas(root, width=width, height=height)
     w.pack()
     w.create_image(0,0,image=img,anchor="nw")
@@ -28,7 +27,7 @@ if __name__ == "__main__":
 	p = Popen("sshpass -p raspberry ssh pi@192.168.43.170 'cd ~/Desktop/RSSI; ./rssi_out.sh;'", stdout=f, shell=True, preexec_fn=os.setsid)#, stdout=stdout, stderr=f)
 	#Popen(['cd', '~/Desktop/RSSI'])
 	#p = Popen(['./rssi_log.sh'], stdout=f)
-	time.sleep(10)
+	time.sleep(15)
 	os.killpg(p.pid, signal.SIGKILL)
 	f.close()
     #function to be called when mouse is clicked
