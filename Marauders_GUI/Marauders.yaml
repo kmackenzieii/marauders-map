@@ -1,0 +1,32 @@
+""
+This is to display the images on the UI
+name and label are required for each item
+color and icon are optional
+only gifs (48x48) are supported
+""
+---
+  -
+
+    name: "capture"
+    label: "Capture"
+    color: "red"
+    icon: "marauders"
+    items: 
+      - 
+        name : "start"
+        label: "Start"
+        color: "#603cba"
+        icon : "shield"
+  - 
+    name: "Live"
+    label: "Live"
+    color: "#9f00a7"
+    icon: "kirk"
+    items:
+      -
+        name : "Locator"
+        label: "Locator"
+        color: "#603cba"
+        icon : "map"
+
+
