@@ -3,10 +3,11 @@
 from glob import glob
 from math import sqrt, floor, ceil
 import os, time, sys, yaml, kirk
+#import  Tkconstants as C
 import tkinter.constants as C
 from tkinter import Tk, Frame, Button, Label, PhotoImage, TOP, \
-    FLAT, BOTH, filedialog, Canvas, Image
-from PIL import ImageTk
+    FLAT, BOTH, Canvas, Image
+
 
 
 class FlatButton(Button):
@@ -177,6 +178,9 @@ class Marauders(Frame):
 
     def display(self, actions):
 
+        width = kirk.width
+        height = kirk.height
+        box_size = kirk.box_size
         self.hide_top()
         self.images = glob("*.gif")
         self.cur = 0
@@ -186,11 +190,20 @@ class Marauders(Frame):
         imagelabel.grid(row=1, column=1)
         imagelabel.pack()
 
+        imagelabel.create_image(0, 0, image=self.image, anchor="nw")
+
+        for x in range(1, width // box_size):
+            imagelabel.create_line(box_size * x, 0, box_size * x, height)
+        for y in range(1, height // box_size):
+            imagelabel.create_line(0, box_size * y, width, box_size * y)
         # layout and show first image
         self.grid()
         self.cur = (self.cur + 1) % len(self.images)
         self.image.configure(file=self.images[self.cur])
         self.parent.update()
+
+
+
 
 
         def coordinates(event):
@@ -257,6 +270,7 @@ def main():
     root = Tk()
     root.geometry("320x240")
     root.wm_title('Marauders Map')
+
     if len(sys.argv) > 1 and sys.argv[1] == 'fs':
         root.wm_attributes('- fullscreen', True)
     app = Marauders(root)

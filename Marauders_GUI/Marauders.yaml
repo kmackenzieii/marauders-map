@@ -1,9 +1,9 @@
-""
-This is to display the images on the UI
-name and label are required for each item
-color and icon are optional
-only gifs (48x48) are supported
-""
+#This File is used
+#
+# name and label are required for each item
+# color and icon are optional
+# only gifs (48x48) are supported
+
 ---
   -
 
@@ -17,6 +17,8 @@ only gifs (48x48) are supported
         label: "Start"
         color: "#603cba"
         icon : "shield"
+
+
   - 
     name: "Live"
     label: "Live"
@@ -28,5 +30,6 @@ only gifs (48x48) are supported
         label: "Locator"
         color: "#603cba"
         icon : "map"
+
 
 
