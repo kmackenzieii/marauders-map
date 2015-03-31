@@ -190,12 +190,6 @@ class Marauders(Frame):
         imagelabel.grid(row=1, column=1)
         imagelabel.pack()
 
-        imagelabel.create_image(0, 0, image=self.image, anchor="nw")
-
-        for x in range(1, width // box_size):
-            imagelabel.create_line(box_size * x, 0, box_size * x, height)
-        for y in range(1, height // box_size):
-            imagelabel.create_line(0, box_size * y, width, box_size * y)
         # layout and show first image
         self.grid()
         self.cur = (self.cur + 1) % len(self.images)

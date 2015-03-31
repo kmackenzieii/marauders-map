@@ -17,6 +17,20 @@
         label: "Start"
         color: "#603cba"
         icon : "shield"
+        items:
+
+        -
+            name : "start"
+            label: "Auditorium"
+            color: "#603cba"
+            icon : "kirk"
+        -
+            name : "hall"
+            label: "Auditorium"
+            color: "#603cbb"
+            icon : "kirk"
+
+
 
 
   - 
