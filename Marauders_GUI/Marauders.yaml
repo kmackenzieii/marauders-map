@@ -29,7 +29,21 @@
             label: "Auditorium"
             color: "#603cbb"
             icon : "kirk"
-
+        -
+            name : "hall"
+            label: "Auditorium"
+            color: "#603cbb"
+            icon : "kirk"
+        -
+            name : "hall"
+            label: "Auditorium"
+            color: "#603cbb"
+            icon : "kirk"
+        -
+            name : "hall"
+            label: "Auditorium"
+            color: "#603cbb"
+            icon : "kirk"
 
 
 

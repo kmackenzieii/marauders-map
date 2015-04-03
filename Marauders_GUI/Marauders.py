@@ -5,7 +5,7 @@ from math import sqrt, floor, ceil
 import os, time, sys, yaml, kirk
 #import  Tkconstants as C
 import tkinter.constants as C
-from tkinter import Tk, Frame, Button, Label, PhotoImage, TOP, \
+from tkinter import Tk, Frame, LEFT,  Button, Label, PhotoImage, TOP, \
     FLAT, BOTH, Canvas, Image
 
 
@@ -128,7 +128,7 @@ class Marauders(Frame):
 
             else:
                 # this is an action
-                btn.configure(command=lambda act=act: self.display(act), )
+                btn.configure(command=lambda act=act: self.display(), )
 
             if 'color' in item:
                 btn.set_color(item['color'])
@@ -176,11 +176,8 @@ class Marauders(Frame):
         """
         self.framestack[len(self.framestack) - 1].pack(fill=BOTH, expand=1)
 
-    def display(self, actions):
+    def display(self):
 
-        width = kirk.width
-        height = kirk.height
-        box_size = kirk.box_size
         self.hide_top()
         self.images = glob("*.gif")
         self.cur = 0
@@ -190,21 +187,54 @@ class Marauders(Frame):
         imagelabel.grid(row=1, column=1)
         imagelabel.pack()
 
+
         # layout and show first image
         self.grid()
         self.cur = (self.cur + 1) % len(self.images)
         self.image.configure(file=self.images[self.cur])
         self.parent.update()
 
-
-
-
-
         def coordinates(event):
             print(event.x, event.y)
 
         imagelabel.bind('<Button-1>', coordinates)
 
+        self.back_btn()
+
+        #self.hide_top()
+
+    def back_btn(self):
+        num = 0
+         # create a new frame
+        wrap = Frame(self, bg="black")
+        # when there were previous frames, hide the top one and add a back button for the new one
+        if len(self.framestack):
+            self.hide_top()
+
+            back = FlatButton(
+                wrap,
+                text='Back…',
+                image=self.get_icon("arrow.left"),
+                command= self.go_back,
+            )
+
+            exitbtn = FlatButton(
+                wrap,
+                text='Exit…',
+                image=self.get_icon("exit"),
+                command=self.app_exit,
+            )
+
+            back.set_color("#00a300")  # green
+            exitbtn.set_color("#00a300")  # green
+
+            back.grid(row=0, column=0, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
+            exitbtn.grid(row=0, column=3, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
+            num += 1
+
+        # add the new frame to the stack and display it
+        self.framestack.append(wrap)
+        self.show_top()
 
     def destroy_top(self):
         """
@@ -222,37 +252,19 @@ class Marauders(Frame):
         while len(self.framestack) > 1:
             self.destroy_top()
 
-    def go_action(self, actions):
-        """
-        execute the action script
-        :param actions:
-        :return:
-        """
-        # hide the menu and show a delay screen
-        self.display(actions)
-        self.hide_top()
-        delay = Frame(self, bg="white")
-        delay.pack(fill=BOTH, expand=1)
-        label = Label(delay, text="Action...", fg="white", bg="#2d89ef", font="Sans 30")
-        label.pack(fill=BOTH, expand=1)
-        self.parent.update()
-
-
-
-        time.sleep(.25)
-
-        # remove delay screen and show menu again
-        delay.destroy()
-        self.destroy_all()
-        self.show_top()
 
     def go_back(self):
         """
         destroy the current frame and reshow the one below
         :return:
         """
+
         self.destroy_top()
+
         self.show_top()
+
+
+
 
     def app_exit(self):
 
@@ -262,7 +274,7 @@ class Marauders(Frame):
 
 def main():
     root = Tk()
-    root.geometry("320x240")
+    root.geometry("320x340")
     root.wm_title('Marauders Map')
 
     if len(sys.argv) > 1 and sys.argv[1] == 'fs':
