@@ -1,7 +1,8 @@
-import  tkinter
-from tkinter import *
-from glob import glob
+import  Tkinter
+from Tkinter import *
 
+from glob import glob
+from PIL import Image, ImageTk, ImageDraw
 class ImageFrame(Frame):
 
     def __init__(self, master=None):
@@ -20,7 +21,11 @@ class ImageFrame(Frame):
         self.show_next()
 
     def show_next(self):
-       self.cur = (self.cur + 1) % len(self.images)
-       self.image.configure(file=self.images[self.cur])
+        self.cur = (self.cur + 1) % len(self.images)
+        self.image = PhotoImage(im)
+        im = Image.open(self.images[self.cur])
+        draw = ImageDraw.Draw(im) 
+        draw.line((0,0, 200,200), fill=128)
+        
 
 ImageFrame().mainloop()
