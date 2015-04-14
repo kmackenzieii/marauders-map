@@ -61,7 +61,7 @@ def record(x, y, iface):
                     if mac != "48:5a:3f:45:21:0f": #Filter out my cellphone
                         arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
                         rssi.update({mac:arr})
-                        rssi[mac][x][y].append(strength)
+                rssi[mac][x][y].append(strength)
                       
     #Now that we have the data, calculate averages for each location
     for mac in rssi:
