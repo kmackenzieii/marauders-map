@@ -3,9 +3,9 @@
 from glob import glob
 from math import sqrt, floor, ceil
 import os, time, sys, yaml, kirk
-#import  Tkconstants as C
-import tkinter.constants as C
-from tkinter import Tk, Frame, LEFT,  Button, Label, PhotoImage, TOP, \
+import  Tkconstants as C
+#import tkinter.constants as C
+from Tkinter import Tk, Frame, LEFT,  Button, Label, PhotoImage, TOP, \
     FLAT, BOTH, Canvas, Image
 
 
@@ -274,7 +274,7 @@ class Marauders(Frame):
 
 def main():
     root = Tk()
-    root.geometry("320x340")
+    root.geometry("240x320")
     root.wm_title('Marauders Map')
 
     if len(sys.argv) > 1 and sys.argv[1] == 'fs':
