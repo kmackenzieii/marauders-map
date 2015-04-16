@@ -1,12 +1,12 @@
-#!/usr/bin/python2
+
 # -*- coding: utf-8 -*-
-from glob import glob
+
 from math import sqrt, floor, ceil
 import os, time, sys, yaml, kirk
 import  Tkconstants as C
 #import tkinter.constants as C
 from Tkinter import Tk, Frame, LEFT,  Button, Label, PhotoImage, TOP, \
-    FLAT, BOTH, Canvas, Image
+    FLAT, BOTH, Image
 from PIL import Image, ImageTk, ImageDraw
 import threading
 import thread
@@ -45,7 +45,7 @@ def piconnect(x, y):
 	    time.sleep(15)
 	    os.killpg(p.pid, signal.SIGKILL)
 	    f.close()
-	    
+
 def record(x, y, iface):
     now = time.time()
     rssi={}
@@ -62,7 +62,7 @@ def record(x, y, iface):
                         arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
                         rssi.update({mac:arr})
                         rssi[mac][x][y].append(strength)
-                      
+
     #Now that we have the data, calculate averages for each location
     for mac in rssi:
         if mac in fingerprint:
@@ -81,7 +81,7 @@ def record(x, y, iface):
     pickle.dump(fingerprint, finger_file)
     finger_file.close()
 
-#function to be called when mouse is clicked    
+#function to be called when mouse is clicked
 def printcoords(event):
     #outputting x and y coords to console
     print (event.x//box_size,event.y//box_size)
@@ -320,39 +320,7 @@ class Marauders(Frame):
         #self.cur = (self.cur + 1) % len(self.images)
         #self.image.configure(file=self.images[self.cur])
         self.parent.update()
-        
-    def back_btn(self):
-        num = 0
-         # create a new frame
-        wrap = Frame(self, bg="black")
-        # when there were previous frames, hide the top one and add a back button for the new one
-        if len(self.framestack):
-            self.hide_top()
 
-            back = FlatButton(
-                wrap,
-                text='Back…',
-                image=self.get_icon("arrow.left"),
-                command= self.go_back,
-            )
-
-            exitbtn = FlatButton(
-                wrap,
-                text='Exit…',
-                image=self.get_icon("exit"),
-                command=self.app_exit,
-            )
-
-            back.set_color("#00a300")  # green
-            exitbtn.set_color("#00a300")  # green
-
-            back.grid(row=0, column=0, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
-            exitbtn.grid(row=0, column=3, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
-            num += 1
-
-        # add the new frame to the stack and display it
-        self.framestack.append(wrap)
-        self.show_top()
 
     def destroy_top(self):
         """
