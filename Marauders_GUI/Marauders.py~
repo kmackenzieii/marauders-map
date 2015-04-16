@@ -19,6 +19,7 @@ import pickle
 import numpy as n
 
 iface = None
+realt = False
 fingerprint = {}
 box_size = 15
 map_size = 240//box_size
@@ -61,7 +62,7 @@ def record(x, y, iface):
                     if mac != "48:5a:3f:45:21:0f": #Filter out my cellphone
                         arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
                         rssi.update({mac:arr})
-                rssi[mac][x][y].append(strength)
+                        rssi[mac][x][y].append(strength)
                       
     #Now that we have the data, calculate averages for each location
     for mac in rssi:
@@ -76,7 +77,6 @@ def record(x, y, iface):
 				    avg[x][y] = n.mean(l)
 				    #avg[x][y] = trimmean(l, 80)
         fingerprint.update({mac:avg})
-    print fingerprint
     finger_file = open(r'fingerprint.pkl', 'wb')
     pickle.dump(fingerprint, finger_file)
     finger_file.close()
@@ -203,8 +203,9 @@ class Marauders(Frame):
                 btn.configure(command=lambda act=act, item=item:
                 self.show_items(item['items'], act), text=item['label'] + '…')
                 btn.set_color("#2b5797")  # dark-blue
-
-
+            elif item['name'] == 'Locator':
+                # this is an action
+                btn.configure(command=lambda act=act: self.realtime(), )
             else:
                 # this is an action
                 btn.configure(command=lambda act=act: self.display(), )
@@ -321,6 +322,131 @@ class Marauders(Frame):
         #self.image.configure(file=self.images[self.cur])
         self.parent.update()
         
+        
+    def realtime(self):
+        global realt
+        box_size = 15
+
+        # create a new frame
+        wrap = Frame(self, bg="black")
+
+        self.hide_top()
+        # label showing the image
+        self.image = Image.open("kirk.gif")
+        draw = ImageDraw.Draw(self.image)
+        self.image = ImageTk.PhotoImage(self.image)
+        imagelabel = Label(wrap, image=self.image)
+        imagelabel.grid(row=0, column=0, columnspan=2, sticky=C.W + C.E + C.N + C.S)
+
+        num = 0
+        # when there were previous frames, hide the top one and add a back button for the new one
+        if len(self.framestack):
+            self.hide_top()
+
+            back = FlatButton(
+                wrap,
+                text='Back…',
+                image=self.get_icon("arrow.left"),
+                command= self.go_back,
+            )
+
+            exitbtn = FlatButton(
+                wrap,
+                text='Exit…',
+                image=self.get_icon("exit"),
+                command=self.app_exit,
+            )
+
+            back.set_color("#00a300")  # green
+            exitbtn.set_color("#00a300")  # green
+
+            back.grid(row=1, column=0, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
+            exitbtn.grid(row=1, column=1, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
+            num += 1
+
+        realt = True
+        
+
+        # add the new frame to the stack and display it
+        self.framestack.append(wrap)
+        self.show_top()
+        self.parent.update()
+        self.after(1,self.realtime_calculation, imagelabel)
+        
+        
+    def realtime_calculation(self, imagelabel):
+        global realt
+        global box_size
+        fingerprint_file = open(r'fingerprint.pkl', 'rb')
+        fingerprint = pickle.load(fingerprint_file)
+        fingerprint_file.close()
+        
+        max_x = 0
+        max_y = 0
+
+        for mac in fingerprint:
+                if len(fingerprint[mac]) > max_x:
+                    max_x = len(fingerprint[mac])
+                    for x in range(len(fingerprint[mac])):
+                            if len(fingerprint[mac][x]) > max_y:
+                                    max_y = len(fingerprint[mac][x])
+        print "realt:", realt
+        while realt:
+            compare = {}
+            packets = sca.sniff(iface=iface, timeout=1)
+            for pkt in packets:
+                mac, strength = parsePacket(pkt)
+                if mac is not None and strength is not None and strength < 0:
+                    if mac in compare:
+                        compare[mac].append(strength)
+                    else:
+                        arr = []
+                        compare.update({mac:arr})
+                        compare[mac].append(strength)	
+            compare_avg = {}
+            for mac in compare:
+                l = compare[mac]
+                avg = n.mean(l)
+                #avg = trimmean(l, 80)
+                compare_avg.update({mac:avg})
+
+            guess = []
+            weight = []
+            difference = [[None]*max_y for _ in range(max_x)]
+            for mac in compare_avg:
+                least = None
+                location = []
+                if mac in fingerprint:
+                    for x in range(len(fingerprint[mac])):
+                        for y in range(len(fingerprint[mac][x])):
+	                        if fingerprint[mac][x][y] != None:
+		                        c = abs(fingerprint[mac][x][y] - compare_avg[mac])
+		                        
+		                        if difference[x][y] != None:
+		                                difference[x][y] += c
+		                        else:
+		                                difference[x][y] = c	
+            final_x = 0
+            final_y = 0
+            for x in range(len(difference)):
+                for y in range(len(difference[x])):
+                    if(difference[final_x][final_y] is None and difference[x][y] is not None):
+                        final_x = x
+                        final_y = y
+                    if(difference[final_x][final_y] > difference[x][y]):
+                        final_x = x
+                        final_y = y  
+            print(final_x, final_y)
+            im = Image.open("kirk.gif").copy()
+            draw = ImageDraw.Draw(self.image) 
+            draw.line((box_size*x, 0, box_size*x, 240), fill=128, width=1)
+            draw.rectangle([final_x*box_size, final_y*box_size, final_x*box_size+box_size, final_y*box_size+box_size], fill=100)
+            self.image = ImageTk.PhotoImage(im)
+            
+            imagelabel.configure(image = self.image)
+            self.parent.update()
+            self.after(50, self.realtime_calculation, imagelabel)
+       
     def back_btn(self):
         num = 0
          # create a new frame
@@ -376,7 +502,9 @@ class Marauders(Frame):
         destroy the current frame and reshow the one below
         :return:
         """
-
+        global realt
+        realt = False
+        print "go_back:", realt
         self.destroy_top()
 
         self.show_top()
