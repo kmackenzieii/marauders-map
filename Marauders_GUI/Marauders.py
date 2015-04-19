@@ -207,7 +207,10 @@ class Marauders(Frame):
 
             else:
                 # this is an action
-                btn.configure(command=lambda act=act: self.display(), )
+                if 'Auditorium' in item['name']:
+                    btn.configure(command=lambda act=act: self.display('kirk'), )
+                else:
+                    btn.configure(command=lambda act=act: self.display('Gil_first'), )
             if 'color' in item:
                 btn.set_color(item['color'])
 
@@ -254,7 +257,7 @@ class Marauders(Frame):
         """
         self.framestack[len(self.framestack) - 1].pack(fill=BOTH, expand=1)
 
-    def display(self):
+    def display(self, map):
         box_size = 15
 
         # create a new frame
@@ -262,7 +265,7 @@ class Marauders(Frame):
 
         self.hide_top()
         # label showing the image
-        self.image = Image.open("kirk.gif")
+        self.image = Image.open(map + ".gif")
         draw = ImageDraw.Draw(self.image) 
         
         for x in range(1, 240//box_size):
