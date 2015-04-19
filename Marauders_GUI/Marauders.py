@@ -215,7 +215,7 @@ class Marauders(Frame):
                         btn.configure(command=lambda act=act: self.capture('Gil_first'), )
                     else:
                         if 'Locator' in item['name']:
-                            btn.configure(command=lambda act=act: self.Live('kirk'), )
+                            btn.configure(command=lambda act=act: self.Live('underCons'), )
                         else:
                             btn.configure(command=lambda act=act: self.Live('underCons'), )
 
