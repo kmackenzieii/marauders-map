@@ -163,7 +163,8 @@ class Marauders(Frame):
             exitbtn.set_color("#00a300")  # green
 
             back.grid(row=0, column=0, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
-            exitbtn.grid(row=0, column=3, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
+            num +=1
+            exitbtn.grid(row=0, column=1, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
             num += 1
 
         # add the new frame to the stack and display it
@@ -208,9 +209,16 @@ class Marauders(Frame):
             else:
                 # this is an action
                 if 'Auditorium' in item['name']:
-                    btn.configure(command=lambda act=act: self.display('kirk'), )
+                    btn.configure(command=lambda act=act: self.capture('kirk'), )
                 else:
-                    btn.configure(command=lambda act=act: self.display('Gil_first'), )
+                    if 'hall' in item['name']:
+                        btn.configure(command=lambda act=act: self.capture('Gil_first'), )
+                    else:
+                        if 'Locator' in item['name']:
+                            btn.configure(command=lambda act=act: self.Live('kirk'), )
+                        else:
+                            btn.configure(command=lambda act=act: self.Live('underCons'), )
+
             if 'color' in item:
                 btn.set_color(item['color'])
 
@@ -257,7 +265,7 @@ class Marauders(Frame):
         """
         self.framestack[len(self.framestack) - 1].pack(fill=BOTH, expand=1)
 
-    def display(self, map):
+    def capture(self, map):
         box_size = 15
 
         # create a new frame
@@ -279,14 +287,9 @@ class Marauders(Frame):
         imagelabel.grid(row=0, column=0, columnspan=2, sticky=C.W + C.E + C.N + C.S)
 
 
-        
-
-        #def coordinates(event):
-        #    print(event.x, event.y)
-
         imagelabel.bind('<Button-1>', printcoords)
 
-        num = 0
+   
         # when there were previous frames, hide the top one and add a back button for the new one
         if len(self.framestack):
             self.hide_top()
@@ -313,15 +316,63 @@ class Marauders(Frame):
             num += 1
 
         # add the new frame to the stack and display it
-        self.framestack.append(wrap)
+            self.framestack.append(wrap)
         self.show_top()
-        #self.back_btn()
+        self.parent.update()
 
-        #self.hide_top()
-        
-        # layout and show first image
-        #self.cur = (self.cur + 1) % len(self.images)
-        #self.image.configure(file=self.images[self.cur])
+
+    def Live(self, map):
+        box_size = 15
+
+        # create a new frame
+        wrap = Frame(self, bg="black")
+
+        self.hide_top()
+        # label showing the image
+        self.image = Image.open(map + ".gif")
+        draw = ImageDraw.Draw(self.image)
+
+        for x in range(1, 240//box_size):
+            draw.line((box_size*x, 0, box_size*x, 240), fill=128, width=1)
+        for y in range(1, 240//box_size):
+            draw.line((0, box_size*y, 240, box_size*y), fill=128, width=1)
+
+
+        self.image = ImageTk.PhotoImage(self.image)
+        imagelabel = Label(wrap, image=self.image)
+        imagelabel.grid(row=0, column=0, columnspan=2, sticky=C.W + C.E + C.N + C.S)
+
+        def coordinates(event):
+            print(event.x, event.y)
+
+        imagelabel.bind('<Button-1>', coordinates)
+
+        # when there were previous frames, hide the top one and add a back button for the new one
+
+        if len(self.framestack):
+            self.hide_top()
+
+            back = FlatButton(
+                wrap,
+                text = 'Back…',
+                image = self.get_icon("arrow.left"),
+                command = self.go_back,
+            )
+
+            exitbtn = FlatButton(
+                wrap,
+                text = 'Exit…',
+                image = self.get_icon("exit"),
+                command = self.app_exit,
+            )
+
+            back.set_color("#00a300")  # green
+            exitbtn.set_color("#00a300")  # green
+
+            back.grid(row=1, column=0, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
+            exitbtn.grid(row=1, column=1, padx=1, pady=1, sticky=C.W + C.E + C.N + C.S)
+            self.framestack.append(wrap)
+        self.show_top()
         self.parent.update()
 
 
