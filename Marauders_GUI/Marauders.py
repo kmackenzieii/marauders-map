@@ -37,16 +37,6 @@ def parsePacket(pkt):
         if pkt.addr2 is not None:
           return pkt.addr2, pkt.dBm_AntSignal
     return None, None
-
-def piconnect(x, y):
-	    f = open('data/' + str(x) + '_' + str(y), 'w+')
-	    p = Popen("sshpass -p raspberry ssh pi@192.168.43.170 'cd ~/Desktop/RSSI; ./rssi_out.sh;'", stdout=f, shell=True, preexec_fn=os.setsid)#, stdout=stdout, stderr=f)
-	    #Popen(['cd', '~/Desktop/RSSI'])
-	    #p = Popen(['./rssi_log.sh'], stdout=f)
-	    time.sleep(15)
-	    os.killpg(p.pid, signal.SIGKILL)
-	    f.close()
-
 def record(x, y, iface):
     now = time.time()
     rssi={}
@@ -209,11 +199,8 @@ class Marauders(Frame):
                 btn.configure(command=lambda act=act: self.realtime(), )
             else:
                 # this is an action
-                if 'auditorium' in item['name']:
-                    btn.configure(command=lambda act=act: self.capture('kirk'), )
-                else:
-                    if 'hall' in item['name']:
-                        btn.configure(command=lambda act=act: self.capture('Gil_first'), )
+		print act
+                btn.configure(command=lambda act=item['name']: self.capture(act), )
 
             if 'color' in item:
                 btn.set_color(item['color'])
@@ -263,7 +250,7 @@ class Marauders(Frame):
 
     def capture(self, map):
         box_size = 15
-
+	print map
         # create a new frame
         wrap = Frame(self, bg="black")
 
@@ -325,7 +312,7 @@ class Marauders(Frame):
 
         self.hide_top()
         # label showing the image
-        self.image = Image.open("kirk.gif")
+        self.image = Image.open("kirk-auditorium2.gif")
         draw = ImageDraw.Draw(self.image)
         self.image = ImageTk.PhotoImage(self.image)
         imagelabel = Label(wrap, image=self.image)
@@ -430,7 +417,7 @@ class Marauders(Frame):
                         final_x = x
                         final_y = y  
             print(final_x, final_y)
-            im = Image.open("kirk.gif").copy()
+            im = Image.open("kirk-auditorium2.gif").copy()
             draw = ImageDraw.Draw(im) 
             draw.line((box_size*x, 0, box_size*x, 240), fill=128, width=1)
             draw.rectangle([final_x*box_size, final_y*box_size, final_x*box_size+box_size, final_y*box_size+box_size], fill=100)
@@ -505,6 +492,7 @@ def main():
 
     # Start channel hopping
     iface = channel_hop.get_mon_iface()
+    #iface = 'wlan2'
     hop = threading.Thread(target=channel_hop.channel_hop, args=[iface])
     hop.daemon = True
     hop.start()

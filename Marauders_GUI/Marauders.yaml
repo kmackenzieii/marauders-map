@@ -20,33 +20,15 @@
         items:
 
         -
-            name : "auditorium"
-            label: "Auditorium"
+            name : "kirk-auditorium2"
+            label: "Kirk Auditorium 2nd Floor"
             color: "#603cba"
-            icon : "kirk"
+            icon : "kirk-auditorium2"
         -
-            name : "hall"
-            label: "Auditorium"
+            name : "kirk-gilbreth2"
+            label: "Kirk 2nd Floor"
             color: "#603cbb"
-            icon : "kirk"
-        -
-            name : "hall"
-            label: "Auditorium"
-            color: "#603cbb"
-            icon : "kirk"
-        -
-            name : "hall"
-            label: "Auditorium"
-            color: "#603cbb"
-            icon : "kirk"
-        -
-            name : "hall"
-            label: "Auditorium"
-            color: "#603cbb"
-            icon : "kirk"
-
-
-
+            icon : "kirk-gilbreth2"
   - 
     name: "Live"
     label: "Live"
