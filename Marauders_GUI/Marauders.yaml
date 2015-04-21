@@ -20,7 +20,7 @@
         items:
 
         -
-            name : "start"
+            name : "auditorium"
             label: "Auditorium"
             color: "#603cba"
             icon : "kirk"
