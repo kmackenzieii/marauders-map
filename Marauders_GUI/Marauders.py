@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 from math import sqrt, floor, ceil
@@ -37,47 +36,6 @@ def parsePacket(pkt):
         if pkt.addr2 is not None:
           return pkt.addr2, pkt.dBm_AntSignal
     return None, None
-def record(x, y, iface):
-    now = time.time()
-    rssi={}
-    future = now + 10
-    while time.time() < future:
-        packets = sca.sniff(iface=iface, timeout = 10)
-        for pkt in packets:
-            mac, strength = parsePacket(pkt)
-            if mac is not None and strength is not None and strength < 0:
-                if mac in rssi:
-                    rssi[mac][x][y].append(strength)
-                else:
-                    if mac != "48:5a:3f:45:21:0f": #Filter out my cellphone
-                        arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
-                        rssi.update({mac:arr})
-                        rssi[mac][x][y].append(strength)
-
-    #Now that we have the data, calculate averages for each location
-    for mac in rssi:
-        if mac in fingerprint:
-            avg = fingerprint[mac]
-        else:
-	        avg = [[None for _ in range(map_size)] for _ in range(map_size)]
-        for x in range(len(rssi[mac])):
-		    for y in range(len(rssi[mac][x])):
-			    l = rssi[mac][x][y]
-			    if len(l) > 0:
-				    avg[x][y] = n.mean(l)
-				    #avg[x][y] = trimmean(l, 80)
-        fingerprint.update({mac:avg})
-    finger_file = open(r'fingerprint.pkl', 'wb')
-    pickle.dump(fingerprint, finger_file)
-    finger_file.close()
-
-#function to be called when mouse is clicked
-def printcoords(event):
-    #outputting x and y coords to console
-    print (event.x//box_size,event.y//box_size)
-    record(event.x//box_size, event.y//box_size, iface)
-    print "DONE"
-
 
 class FlatButton(Button):
     def __init__(self, master=None, cnf={}, **kw):
@@ -248,6 +206,43 @@ class Marauders(Frame):
         """
         self.framestack[len(self.framestack) - 1].pack(fill=BOTH, expand=1)
 
+    def record(self, x, y, iface):
+        global fingerprint
+        now = time.time()
+        rssi={}
+        future = now + 10
+        while time.time() < future:
+            packets = sca.sniff(iface=iface, timeout = 10)
+            for pkt in packets:
+                mac, strength = parsePacket(pkt)
+                if mac is not None and strength is not None and strength < 0:
+                    if mac in rssi:
+                        rssi[mac][x][y].append(strength)
+                    else:
+                        if mac != "48:5a:3f:45:21:0f": #Filter out my cellphone
+                            arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
+                            rssi.update({mac:arr})
+                            rssi[mac][x][y].append(strength)
+
+        #Now that we have the data, calculate averages for each location
+        for mac in rssi:
+            if mac in fingerprint:
+                avg = fingerprint[mac]
+            else:
+                    avg = [[None for _ in range(map_size)] for _ in range(map_size)]
+            for x in range(len(rssi[mac])):
+                        for y in range(len(rssi[mac][x])):
+                                l = rssi[mac][x][y]
+                                if len(l) > 0:
+                                        avg[x][y] = n.mean(l)
+                                        #avg[x][y] = trimmean(l, 80)
+            fingerprint.update({mac:avg})
+        finger_file = open(self.path + '/fingerprint.pkl', 'wb')
+        pickle.dump(fingerprint, finger_file)
+        finger_file.close()
+
+
+
     def capture(self, map):
         box_size = 15
 	print map
@@ -256,7 +251,7 @@ class Marauders(Frame):
 
         self.hide_top()
         # label showing the image
-        self.image = Image.open(map + ".gif")
+        self.image = Image.open(self.path + "/" + map + ".gif")
         draw = ImageDraw.Draw(self.image) 
         
         for x in range(1, 240//box_size):
@@ -270,7 +265,7 @@ class Marauders(Frame):
         imagelabel.grid(row=0, column=0, columnspan=2, sticky=C.W + C.E + C.N + C.S)
 
 
-        imagelabel.bind('<Button-1>', printcoords)
+        imagelabel.bind('<Button-1>', self.printcoords)
 
    
         # when there were previous frames, hide the top one and add a back button for the new one
@@ -303,6 +298,14 @@ class Marauders(Frame):
         self.show_top()
         self.parent.update()
         
+    #function to be called when mouse is clicked
+    def printcoords(self, event):
+        #outputting x and y coords to console
+        print (event.x//box_size, event.y//box_size)
+        self.record(event.x//box_size, event.y//box_size, iface)
+        print "DONE"
+
+
     def realtime(self):
         global realt
         box_size = 15
@@ -312,7 +315,7 @@ class Marauders(Frame):
 
         self.hide_top()
         # label showing the image
-        self.image = Image.open("kirk-auditorium2.gif")
+        self.image = Image.open(self.path + "/kirk-auditorium2.gif")
         draw = ImageDraw.Draw(self.image)
         self.image = ImageTk.PhotoImage(self.image)
         imagelabel = Label(wrap, image=self.image)
@@ -357,7 +360,7 @@ class Marauders(Frame):
     def realtime_calculation(self, imagelabel):
         global realt
         global box_size
-        fingerprint_file = open(r'fingerprint.pkl', 'rb')
+        fingerprint_file = open(self.path+'/fingerprint.pkl', 'rb')
         fingerprint = pickle.load(fingerprint_file)
         fingerprint_file.close()
         
@@ -417,12 +420,12 @@ class Marauders(Frame):
                         final_x = x
                         final_y = y  
             print(final_x, final_y)
-            im = Image.open("kirk-auditorium2.gif").copy()
+            im = Image.open(self.path + "/kirk-auditorium2.gif").copy()
             draw = ImageDraw.Draw(im) 
             draw.line((box_size*x, 0, box_size*x, 240), fill=128, width=1)
             draw.rectangle([final_x*box_size, final_y*box_size, final_x*box_size+box_size, final_y*box_size+box_size], fill=100)
-            self.image = ImageTk.PhotoImage(im)
-            
+            self.image = ImageTk.PhotoImage(im)            
+
             imagelabel.configure(image = self.image)
             self.parent.update()
             self.after(50, self.realtime_calculation, imagelabel)
@@ -482,6 +485,7 @@ class Marauders(Frame):
 
 
 def main():
+    global fingerprint
     root = Tk()
     root.geometry("240x320")
     root.wm_title('Marauders Map')
@@ -490,6 +494,9 @@ def main():
         root.wm_attributes('- fullscreen', True)
     app = Marauders(root)
 
+
+    channel_hop.start_mon_mode('wlan0')
+
     # Start channel hopping
     iface = channel_hop.get_mon_iface()
     #iface = 'wlan2'
@@ -497,8 +504,8 @@ def main():
     hop.daemon = True
     hop.start()
     
-    if(os.path.isfile('./fingerprint.pkl')):
-        fingerprint_file = open(r'fingerprint.pkl', 'rb')
+    if(os.path.isfile(app.path + '/fingerprint.pkl')):
+        fingerprint_file = open(app.path + '/fingerprint.pkl', 'rb')
         fingerprint = pickle.load(fingerprint_file)
         fingerprint_file.close()
 
