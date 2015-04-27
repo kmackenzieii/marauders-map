@@ -206,7 +206,7 @@ class Marauders(Frame):
         """
         self.framestack[len(self.framestack) - 1].pack(fill=BOTH, expand=1)
 
-    def record(self, x, y, iface):
+    def record(self, x, y, z, iface):
         global fingerprint
         now = time.time()
         rssi={}
@@ -217,26 +217,37 @@ class Marauders(Frame):
                 mac, strength = parsePacket(pkt)
                 if mac is not None and strength is not None and strength < 0:
                     if mac in rssi:
-                        rssi[mac][x][y].append(strength)
+			if z in rssi[mac]:
+                            rssi[mac][z][x][y].append(strength)
+                        else:
+                            arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
+                            rssi[mac].update({z:arr})
+                            rssi[mac][z][x][y].append(strength)
                     else:
                         if mac != "48:5a:3f:45:21:0f": #Filter out my cellphone
                             arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
-                            rssi.update({mac:arr})
-                            rssi[mac][x][y].append(strength)
+                            new_map = {}
+                            new_map.update({z:arr})
+                            rssi.update({mac:new_map})
+                            rssi[mac][z][x][y].append(strength)
 
         #Now that we have the data, calculate averages for each location
         for mac in rssi:
             if mac in fingerprint:
-                avg = fingerprint[mac]
+		if z in fingerprint[mac]:
+                    avg = fingerprint[mac][z]
+		else:
+		    avg = [[None for _ in range(map_size)] for _ in range(map_size)]
             else:
-                    avg = [[None for _ in range(map_size)] for _ in range(map_size)]
-            for x in range(len(rssi[mac])):
-                        for y in range(len(rssi[mac][x])):
-                                l = rssi[mac][x][y]
+                avg = [[None for _ in range(map_size)] for _ in range(map_size)]
+                fingerprint.update({mac:{}})
+            for x in range(len(rssi[mac][z])):
+                        for y in range(len(rssi[mac][z][x])):
+                                l = rssi[mac][z][x][y]
                                 if len(l) > 0:
                                         avg[x][y] = n.mean(l)
                                         #avg[x][y] = trimmean(l, 80)
-            fingerprint.update({mac:avg})
+            fingerprint[mac].update({z:avg})
         finger_file = open(self.path + '/fingerprint.pkl', 'wb')
         pickle.dump(fingerprint, finger_file)
         finger_file.close()
@@ -244,6 +255,7 @@ class Marauders(Frame):
 
 
     def capture(self, map):
+	self.map = map
         box_size = 15
 	print map
         # create a new frame
@@ -302,7 +314,7 @@ class Marauders(Frame):
     def printcoords(self, event):
         #outputting x and y coords to console
         print (event.x//box_size, event.y//box_size)
-        self.record(event.x//box_size, event.y//box_size, iface)
+        self.record(event.x//box_size, event.y//box_size, self.map, iface)
         print "DONE"
 
 
@@ -367,12 +379,16 @@ class Marauders(Frame):
         max_x = 0
         max_y = 0
 
+	difference = {}
+
         for mac in fingerprint:
-                if len(fingerprint[mac]) > max_x:
-                    max_x = len(fingerprint[mac])
-                    for x in range(len(fingerprint[mac])):
-                            if len(fingerprint[mac][x]) > max_y:
-                                    max_y = len(fingerprint[mac][x])
+            for z in fingerprint[mac]:
+		difference.update({z:[]})
+                if len(fingerprint[mac][z]) > max_x:
+                    max_x = len(fingerprint[mac][z])
+                    for x in range(len(fingerprint[mac][z])):
+                            if len(fingerprint[mac][z][x]) > max_y:
+                                    max_y = len(fingerprint[mac][z][x])
         print "realt:", realt
         while realt:
             compare = {}
@@ -395,32 +411,40 @@ class Marauders(Frame):
 
             guess = []
             weight = []
-            difference = [[None]*max_y for _ in range(max_x)]
+	    for z in difference:
+                difference[z] = [[None]*max_y for _ in range(max_x)]
             for mac in compare_avg:
                 least = None
                 location = []
                 if mac in fingerprint:
-                    for x in range(len(fingerprint[mac])):
-                        for y in range(len(fingerprint[mac][x])):
-	                        if fingerprint[mac][x][y] != None:
-		                        c = abs(fingerprint[mac][x][y] - compare_avg[mac])
+		    for z in fingerprint[mac]:
+                        for x in range(len(fingerprint[mac][z])):
+                            for y in range(len(fingerprint[mac][z][x])):
+	                            if fingerprint[mac][z][x][y] != None:
+		                        c = abs(fingerprint[mac][z][x][y] - compare_avg[mac])
 		                        
-		                        if difference[x][y] != None:
-		                                difference[x][y] += c
+		                        if difference[z][x][y] != None:
+		                                difference[z][x][y] += c
 		                        else:
-		                                difference[x][y] = c	
-            final_x = 0
+		                                difference[z][x][y] = c	
+            final_z = ''
+	    final_x = 0
             final_y = 0
-            for x in range(len(difference)):
-                for y in range(len(difference[x])):
-                    if(difference[final_x][final_y] is None and difference[x][y] is not None):
-                        final_x = x
-                        final_y = y
-                    if(difference[final_x][final_y] > difference[x][y]):
-                        final_x = x
-                        final_y = y  
-            print(final_x, final_y)
-            im = Image.open(self.path + "/kirk-auditorium2.gif").copy()
+	    for z in difference:
+                for x in range(len(difference[z])):
+                    for y in range(len(difference[z][x])):
+			if(final_z == ''):
+			    final_z = z
+                        if(difference[final_z][final_x][final_y] is None and difference[z][x][y] is not None):
+                            final_z = z
+			    final_x = x
+                            final_y = y
+                        if(difference[final_z][final_x][final_y] > difference[z][x][y]):
+                            final_z = z
+			    final_x = x
+                            final_y = y  
+            print(final_z, final_x, final_y)
+            im = Image.open(self.path + "/"+ final_z +".gif").copy()
             draw = ImageDraw.Draw(im) 
             draw.line((box_size*x, 0, box_size*x, 240), fill=128, width=1)
             draw.rectangle([final_x*box_size, final_y*box_size, final_x*box_size+box_size, final_y*box_size+box_size], fill=100)
