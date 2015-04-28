@@ -16,6 +16,8 @@ import scapy_ex
 import channel_hop
 import pickle
 import numpy as n
+import signal
+from subprocess import Popen, PIPE
 
 iface = None
 realt = False
@@ -212,12 +214,15 @@ class Marauders(Frame):
         rssi={}
         future = now + 10
         while time.time() < future:
+            p = Popen("sudo "+self.path+"/ibeacon_scan -b 2> /dev/null", stdout=PIPE, shell=True, preexec_fn=os.setsid)
             packets = sca.sniff(iface=iface, timeout = 10)
+            os.killpg(p.pid, signal.SIGTERM)
+            bl_packets = p.stdout.read().split('\n')
             for pkt in packets:
                 mac, strength = parsePacket(pkt)
                 if mac is not None and strength is not None and strength < 0:
                     if mac in rssi:
-			if z in rssi[mac]:
+                        if z in rssi[mac]:
                             rssi[mac][z][x][y].append(strength)
                         else:
                             arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
@@ -230,7 +235,25 @@ class Marauders(Frame):
                             new_map.update({z:arr})
                             rssi.update({mac:new_map})
                             rssi[mac][z][x][y].append(strength)
-
+	    for pkt in bl_packets:
+                content = pkt.split()
+                if len(content) == 2:
+                    mac = content[0]
+                    strength = content[1]
+                    if mac is not None and strength is not None and strength < 0:
+                        if mac in rssi:
+		            if z in rssi[mac]:
+                                rssi[mac][z][x][y].append(strength)
+                            else:
+                                arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
+                                rssi[mac].update({z:arr})
+                                rssi[mac][z][x][y].append(strength)
+                        else:
+                            arr = [[[] for _ in range(map_size)] for _ in range(map_size)]
+                            new_map = {}
+                            new_map.update({z:arr})
+                            rssi.update({mac:new_map})
+                            rssi[mac][z][x][y].append(strength)
         #Now that we have the data, calculate averages for each location
         for mac in rssi:
             if mac in fingerprint:
@@ -375,24 +398,27 @@ class Marauders(Frame):
         fingerprint_file = open(self.path+'/fingerprint.pkl', 'rb')
         fingerprint = pickle.load(fingerprint_file)
         fingerprint_file.close()
-        
+ 
         max_x = 0
         max_y = 0
 
 	difference = {}
-
+	num_macs = {}
         for mac in fingerprint:
             for z in fingerprint[mac]:
 		difference.update({z:[]})
+		num_macs.update({z:[]})
                 if len(fingerprint[mac][z]) > max_x:
                     max_x = len(fingerprint[mac][z])
                     for x in range(len(fingerprint[mac][z])):
                             if len(fingerprint[mac][z][x]) > max_y:
                                     max_y = len(fingerprint[mac][z][x])
-        print "realt:", realt
         while realt:
             compare = {}
+	    p = Popen("sudo "+self.path+"/ibeacon_scan -b 2> /dev/null", stdout=PIPE, shell=True, preexec_fn=os.setsid)
             packets = sca.sniff(iface=iface, timeout=1)
+	    os.killpg(p.pid, signal.SIGTERM)
+            bl_packets = p.stdout.read().split('\n')
             for pkt in packets:
                 mac, strength = parsePacket(pkt)
                 if mac is not None and strength is not None and strength < 0:
@@ -402,6 +428,19 @@ class Marauders(Frame):
                         arr = []
                         compare.update({mac:arr})
                         compare[mac].append(strength)	
+	    for pkt in bl_packets:
+                content = pkt.split()
+                if len(content) == 2:
+                    mac = content[0]
+                    strength = content[1]
+		    if mac is not None and strength is not None and strength < 0:
+                        if mac in compare:
+                            compare[mac].append(strength)
+                        else:
+                            arr = []
+                            compare.update({mac:arr})
+                            compare[mac].append(strength)  
+
             compare_avg = {}
             for mac in compare:
                 l = compare[mac]
@@ -413,6 +452,7 @@ class Marauders(Frame):
             weight = []
 	    for z in difference:
                 difference[z] = [[None]*max_y for _ in range(max_x)]
+		num_macs[z] = [[0]*max_y for _ in range(max_x)]
             for mac in compare_avg:
                 least = None
                 location = []
@@ -422,7 +462,7 @@ class Marauders(Frame):
                             for y in range(len(fingerprint[mac][z][x])):
 	                            if fingerprint[mac][z][x][y] != None:
 		                        c = abs(fingerprint[mac][z][x][y] - compare_avg[mac])
-		                        
+		                        num_macs[z][x][y] = num_macs[z][x][y] + 1
 		                        if difference[z][x][y] != None:
 		                                difference[z][x][y] += c
 		                        else:
@@ -430,6 +470,7 @@ class Marauders(Frame):
             final_z = ''
 	    final_x = 0
             final_y = 0
+	    print difference
 	    for z in difference:
                 for x in range(len(difference[z])):
                     for y in range(len(difference[z][x])):
@@ -439,7 +480,7 @@ class Marauders(Frame):
                             final_z = z
 			    final_x = x
                             final_y = y
-                        if(difference[final_z][final_x][final_y] > difference[z][x][y]):
+                        if(difference[z][x][y] != None and difference[final_z][final_x][final_y]/num_macs[final_z][final_x][final_y] > difference[z][x][y]/num_macs[z][x][y]):
                             final_z = z
 			    final_x = x
                             final_y = y  
