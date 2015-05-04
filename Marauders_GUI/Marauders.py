@@ -214,7 +214,7 @@ class Marauders(Frame):
         rssi={}
         future = now + 10
         while time.time() < future:
-            p = Popen("sudo "+self.path+"/ibeacon_scan -b 2> /dev/null", stdout=PIPE, shell=True, preexec_fn=os.setsid)
+            p = Popen([self.path+"/ibeacon_scan","-b"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
             packets = sca.sniff(iface=iface, timeout = 10)
             os.killpg(p.pid, signal.SIGTERM)
             bl_packets = p.stdout.read().split('\n')
@@ -427,10 +427,11 @@ class Marauders(Frame):
             compare = {}
 	    bl_count = 0
 	    wifi_count = 0
-	    p = Popen("sudo "+self.path+"/ibeacon_scan -b 2> /dev/null", stdout=PIPE, shell=True, preexec_fn=os.setsid)
+	    p = Popen([self.path+"/ibeacon_scan","-b"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
             packets = sca.sniff(iface=iface, timeout=1)
 	    os.killpg(p.pid, signal.SIGTERM)
             bl_packets = p.stdout.read().split('\n')
+	    
             for pkt in packets:
                 mac, strength = parsePacket(pkt)
                 if mac is not None and strength is not None and strength < 0:
@@ -444,8 +445,9 @@ class Marauders(Frame):
 	    for pkt in bl_packets:
                 content = pkt.split()
                 if len(content) == 2:
-                    mac = content[0]
-                    strength = content[1]
+                    mac = str(content[0])
+                    strength = int(content[1])
+		    print mac, strength
 		    if mac is not None and strength is not None and strength < 0:
                         if mac in compare:
                             compare[mac].append(strength)
@@ -585,6 +587,9 @@ def main():
     hop.daemon = True
     hop.start()
     
+    #p = Popen([app.path+"/ibeacon_scan","-b"], stdout=PIPE, preexec_fn=os.setsid)
+
+
     if(os.path.isfile(app.path + '/fingerprint.pkl')):
         fingerprint_file = open(app.path + '/fingerprint.pkl', 'rb')
         fingerprint = pickle.load(fingerprint_file)
