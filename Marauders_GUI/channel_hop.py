@@ -115,9 +115,9 @@ def channel_hop(mon_iface):
 	    elif channelNum == 6:
 		channelNum = 11
 	    elif channelNum == 1:
-	        chennelNum = 6
+	        channelNum = 6
             elif channelNum == 0:
-		chennelNum = 1
+		channelNum = 1
             monchannel = str(channelNum)
 
             try:

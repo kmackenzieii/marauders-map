@@ -332,13 +332,23 @@ class Marauders(Frame):
             self.framestack.append(wrap)
         self.show_top()
         self.parent.update()
-        
+    
+    def blink(self):
+	wrap = Frame(self, bg="green")
+	self.hide_top()
+        if len(self.framestack):
+	    self.hide_top()
+	    self.framestack.append(wrap)
+	self.show_top()
+	self.parent.update()
     #function to be called when mouse is clicked
     def printcoords(self, event):
         #outputting x and y coords to console
         print (event.x//box_size, event.y//box_size)
+	self.blink()
         self.record(event.x//box_size, event.y//box_size, self.map, iface)
-        print "DONE"
+        self.go_back()
+	print "DONE"
 
 
     def realtime(self):
@@ -415,6 +425,8 @@ class Marauders(Frame):
                                     max_y = len(fingerprint[mac][z][x])
         while realt:
             compare = {}
+	    bl_count = 0
+	    wifi_count = 0
 	    p = Popen("sudo "+self.path+"/ibeacon_scan -b 2> /dev/null", stdout=PIPE, shell=True, preexec_fn=os.setsid)
             packets = sca.sniff(iface=iface, timeout=1)
 	    os.killpg(p.pid, signal.SIGTERM)
@@ -425,6 +437,7 @@ class Marauders(Frame):
                     if mac in compare:
                         compare[mac].append(strength)
                     else:
+			wifi_count = wifi_count + 1
                         arr = []
                         compare.update({mac:arr})
                         compare[mac].append(strength)	
@@ -437,6 +450,7 @@ class Marauders(Frame):
                         if mac in compare:
                             compare[mac].append(strength)
                         else:
+			    bl_count = bl_count + 1
                             arr = []
                             compare.update({mac:arr})
                             compare[mac].append(strength)  
@@ -489,6 +503,8 @@ class Marauders(Frame):
             draw = ImageDraw.Draw(im) 
             draw.line((box_size*x, 0, box_size*x, 240), fill=128, width=1)
             draw.rectangle([final_x*box_size, final_y*box_size, final_x*box_size+box_size, final_y*box_size+box_size], fill=100)
+	    draw.text([5,5], str(wifi_count))
+	    draw.text([5,15], str(bl_count))
             self.image = ImageTk.PhotoImage(im)            
 
             imagelabel.configure(image = self.image)
