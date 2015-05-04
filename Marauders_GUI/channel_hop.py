@@ -110,9 +110,14 @@ def channel_hop(mon_iface):
     err = None
 
     while 1:
-            channelNum +=1
-            if channelNum > maxChan:
-                channelNum = 1
+	    if channelNum == 11:
+	        channelNum = 1
+	    elif channelNum == 6:
+		channelNum = 11
+	    elif channelNum == 1:
+	        chennelNum = 6
+            elif channelNum == 0:
+		chennelNum = 1
             monchannel = str(channelNum)
 
             try:
