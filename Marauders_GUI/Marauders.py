@@ -214,11 +214,13 @@ class Marauders(Frame):
         rssi={}
         future = now + 10
         while time.time() < future:
-            p = Popen([self.path+"/ibeacon_scan","-b"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
+	    #os.system("sudo hciconfig hci0 reset")
+            #p = Popen([self.path+"/ibeacon_scan","-b"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
             packets = sca.sniff(iface=iface, timeout = 10)
-            os.killpg(p.pid, signal.SIGTERM)
-            bl_packets = p.stdout.read().split('\n')
-            for pkt in packets:
+            #os.killpg(p.pid, signal.SIGTERM)
+            #bl_packets = p.stdout.read().split('\n')
+            bl_packets = [] #Empty bluetooth until it works properly
+	    for pkt in packets:
                 mac, strength = parsePacket(pkt)
                 if mac is not None and strength is not None and strength < 0:
                     if mac in rssi:
@@ -427,11 +429,13 @@ class Marauders(Frame):
             compare = {}
 	    bl_count = 0
 	    wifi_count = 0
-	    p = Popen([self.path+"/ibeacon_scan","-b"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
+	    #os.system("sudo hciconfig hci0 reset")
+	    #p = Popen([self.path+"/ibeacon_scan","-b"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
             packets = sca.sniff(iface=iface, timeout=1)
-	    os.killpg(p.pid, signal.SIGTERM)
-            bl_packets = p.stdout.read().split('\n')
-	    
+	    #sys.stdout.flush()
+	    #os.killpg(p.pid, signal.SIGTERM)
+            #bl_packets = p.stdout.read().split('\n')
+	    bl_packets = [] # empty until bluetooth works
             for pkt in packets:
                 mac, strength = parsePacket(pkt)
                 if mac is not None and strength is not None and strength < 0:
@@ -587,6 +591,11 @@ def main():
     hop.daemon = True
     hop.start()
     
+
+    os.system("sudo hciconfig hci0 reset")
+    #p = Popen(["hciconfig", "hci0", "down"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
+    #p = Popen(["hciconfig", "hci0","up"], stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
+
     #p = Popen([app.path+"/ibeacon_scan","-b"], stdout=PIPE, preexec_fn=os.setsid)
 
 
